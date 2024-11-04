@@ -345,38 +345,38 @@ function GuiLib.new(title)
             local function setupKeybind(keybindButton)
                 local awaitingBind = false
 
-                local bindConnection
-
                 keybindButton.MouseButton1Click:Connect(function()
                     awaitingBind = true
                     keybindButton.Text = "..."
-
-                    if bindConnection then
-                        bindConnection:Disconnect()
-                    end
                 end)
 
-                bindConnection = UserInputService.InputBegan:Connect(function(input)
-                    if awaitingBind then
-                        local keyName = input.KeyCode.Name
-                        if keyName ~= "Unknown" then
-                            keybindButton.Text = keyName
-                            settingsData.keybind = keyName
-                            awaitingBind = false
-                            callback(settingsData)
+                local function handleInput(input)
+                    if input.UserInputType == Enum.UserInputType.Keyboard then
+                        if awaitingBind then
+
+                            local keyName = input.KeyCode.Name
+                            if keyName ~= "Unknown" then
+                                settingsData.keybind = keyName
+                                keybindButton.Text = keyName
+                                awaitingBind = false
+                                callback(settingsData)
+                            end
+                        elseif settingsData.keybind ~= "NONE" and input.KeyCode.Name == settingsData.keybind then
+
+                            enabled = not enabled
+                            settingsData.enabled = enabled
+                            updateToggle()
                         end
-                    elseif input.KeyCode.Name == settingsData.keybind and settingsData.keybind ~= "NONE" then
-
-                        enabled = not enabled
-                        settingsData.enabled = enabled
-
-                        status.BackgroundColor3 = enabled and THEME.Enabled or THEME.Disabled
-                        toggle.TextColor3 = enabled and THEME.Text or THEME.TextDark
-                        gear.ImageColor3 = enabled and THEME.Text or THEME.TextDark
-
-                        callback(settingsData)
                     end
-                end)
+                end
+
+                local inputConnection = game:GetService("UserInputService").InputBegan:Connect(handleInput)
+
+                return function()
+                    if inputConnection then
+                        inputConnection:Disconnect()
+                    end
+                end
             end
 
             local function createSettingsWindow()
@@ -507,9 +507,12 @@ function GuiLib.new(title)
                     container.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y)
                 end)
 
-                setupKeybind(keybindButton)
+                local cleanupKeybind = setupKeybind(keybindButton)
 
                 close.MouseButton1Click:Connect(function()
+                    if cleanupKeybind then
+                        cleanupKeybind()
+                    end
                     settingsGui:Destroy()
                 end)
 
