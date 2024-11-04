@@ -342,6 +342,14 @@ function GuiLib.new(title)
             gear.ImageColor3 = THEME.TextDark
             gear.Parent = toggle
 
+            local function updateToggle()
+                settingsData.enabled = enabled
+                status.BackgroundColor3 = enabled and THEME.Enabled or THEME.Disabled
+                toggle.TextColor3 = enabled and THEME.Text or THEME.TextDark
+                gear.ImageColor3 = enabled and THEME.Text or THEME.TextDark
+                callback(settingsData)
+            end
+
             local function setupKeybind(keybindButton)
                 local awaitingBind = false
 
@@ -353,7 +361,6 @@ function GuiLib.new(title)
                 local function handleInput(input)
                     if input.UserInputType == Enum.UserInputType.Keyboard then
                         if awaitingBind then
-
                             local keyName = input.KeyCode.Name
                             if keyName ~= "Unknown" then
                                 settingsData.keybind = keyName
@@ -362,7 +369,6 @@ function GuiLib.new(title)
                                 callback(settingsData)
                             end
                         elseif settingsData.keybind ~= "NONE" and input.KeyCode.Name == settingsData.keybind then
-
                             enabled = not enabled
                             settingsData.enabled = enabled
                             updateToggle()
@@ -547,14 +553,6 @@ function GuiLib.new(title)
                 end)
             end
 
-            local function updateToggle()
-                settingsData.enabled = enabled
-                status.BackgroundColor3 = enabled and THEME.Enabled or THEME.Disabled
-                toggle.TextColor3 = enabled and THEME.Text or THEME.TextDark
-                gear.ImageColor3 = enabled and THEME.Text or THEME.TextDark
-                callback(settingsData)
-            end
-
             toggle.MouseButton1Click:Connect(function()
                 enabled = not enabled
                 updateToggle()
@@ -562,7 +560,7 @@ function GuiLib.new(title)
 
             toggle.MouseButton2Click:Connect(createSettingsWindow)
 
-            setupKeybind(Instance.new("TextButton")) 
+            setupKeybind(Instance.new("TextButton"))
 
             return settingsData
         end
